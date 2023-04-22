@@ -24,8 +24,10 @@ int main() {
     // 将socket地址与文件描述符sockfd绑定。定义时使用专用socket地址；为了便于绑定时转为通用socket。
     // 专用socket地址表示特定的通信协议、IP地址和端口号，而通用socket地址可以接收任何类型（AF_INET、AF_UNIX等）的socket地址。
     bind(sockfd, (sockaddr*)&serv_addr, sizeof(serv_addr));
-
-
+    
+    // 使用listen函数监听这个socket端口sockfd。listen函数使用主动连接套接字变为被连接套接口，使得一个进程可以接受其它进程的请求，从而成为一个服务器进程。
+    // SOMAXCONN定义了系统中每一个端口最大的监听队列的长度，这是个全局的参数，默认值为128。
+    listen(sockfd, SOMAXCONN);
 
     return 0;
 }
