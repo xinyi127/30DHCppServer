@@ -6,8 +6,10 @@
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h> // close() 函数
+#include <errno.h> // errno
 
 #define MAX_EVENTS 1024
+#define READ_BUFFER 1024
 
 // 将文件描述符 fd 设置为非阻塞模式
 void setnonblocking(int fd) {
@@ -70,10 +72,40 @@ int main() {
                 ev.events = EPOLLIN | EPOLLET;
                 setnonblocking(clnt_sockfd); // ET 模式需搭配非阻塞式 socket 使用，非阻塞式 socket 在进行 I/O 操作时，如果没有数据，则立即返回
                 epoll_ctl(epfd, EPOLL_CTL_ADD, clnt_sockfd, &ev);
+            } else if (events[i].events & EPOLLIN) { // 可读事件，epoll_event 通过 events 的低 7 位记录 7 种不同事件类型
+
+                printf("测试");
+
+                char buf[READ_BUFFER]; // 定义缓冲区
+                while(true) {
+                    bzero(&buf, sizeof(buf));
+                    ssize_t bytes_read = read(events[i].data.fd, buf, sizeof(buf)); // ssize_t 是有符号整数，经常用于系统调用函数的返回类型
+                    if (bytes_read == -1) {
+                        // errno 是 C 标准库中一个全局的、线程安全的变量，用于表示最近一次系统调用，声明在头文件 errno.h 中
+                        if (errno == EINTR) { // errno 值为 EINTR 表示操作被信号中断，此处表示客户端正常中断，需要继续读取
+                            printf("continue reading");
+                            continue;
+                        } else if ((errno == EAGAIN) || (errno == EWOULDBLOCK)) { // EAGAIN 和 EWOULDBLOCK 均表示资源暂时不可用，在非阻塞 I/O 下表示数据全部被读完
+                            printf("finish reading once, errno: %d\n", errno);
+                            break;
+                        }
+                    } else if (bytes_read == 0) { // read 返回 0 表示 EOF，此处表示客户端断开连接
+                        printf("EOF, client fd %d disconnected\n", events[i].data.fd);
+                        epoll_ctl(epfd, EPOLL_CTL_DEL, events[i].data.fd, NULL); // 在关闭 socket 之前，应当先将其从 epoll 中删除
+                        close(events[i].data.fd); // socket 被关闭后，是否会自动从 epoll 中删除：https://blog.csdn.net/qq_43684922/article/details/99205294
+                        break;
+                    } else if (bytes_read > 0) {
+                        printf("message from client fd %d: %s\n", events[i].data.fd, buf);
+                        write(events[i].data.fd, buf, sizeof(buf));
+                    }
+                }
+            } else {
+                printf("something else happened\n"); // 发生其他事件，留待后续实现
             }
         }
     }
-    close(sockfd); // 记得关闭 socket，释放系统资源
+    epoll_ctl(epfd, EPOLL_CTL_DEL, sockfd, NULL);
+    close(sockfd);
     return 0;
 }
 
