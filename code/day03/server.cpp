@@ -73,9 +73,6 @@ int main() {
                 setnonblocking(clnt_sockfd); // ET 模式需搭配非阻塞式 socket 使用，非阻塞式 socket 在进行 I/O 操作时，如果没有数据，则立即返回
                 epoll_ctl(epfd, EPOLL_CTL_ADD, clnt_sockfd, &ev);
             } else if (events[i].events & EPOLLIN) { // 可读事件，epoll_event 通过 events 的低 7 位记录 7 种不同事件类型
-
-                printf("测试");
-
                 char buf[READ_BUFFER]; // 定义缓冲区
                 while(true) {
                     bzero(&buf, sizeof(buf));
@@ -104,6 +101,7 @@ int main() {
             }
         }
     }
+
     epoll_ctl(epfd, EPOLL_CTL_DEL, sockfd, NULL);
     close(sockfd);
     return 0;
