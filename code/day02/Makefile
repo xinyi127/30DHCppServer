@@ -1,4 +1,4 @@
-server:
+server: util.cpp server.cpp client.cpp
 # 反斜线表示换行，便于阅读
 	g++ util.cpp client.cpp -o client && \
 		g++ util.cpp server.cpp -o server
