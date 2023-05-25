@@ -28,6 +28,10 @@ Epoll::~Epoll() {
     delete [] events;
 }
 
+int Epoll::getFd(){
+    return epfd;
+}
+
 void Epoll::addFd(int fd, uint32_t op) {
     struct epoll_event ev;
     memset(&ev, 0, sizeof(ev));
