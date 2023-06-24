@@ -37,8 +37,9 @@ int main() {
         // poll() 成员函数中封装了 epoll_wait()，返回 epoll 树上发生的事件信息
         std::vector<Channel*> activeChannels = ep->poll();
         int nfds = activeChannels.size();
-        for(int i = 0; i < nfds; ++ i){
-            int chfd = activeChannels[i]->getFd(); // 发生事件的文件描述符是什么时候被记录到 Channel 中的？
+        for(int i = 0; i < nfds; ++ i){ 
+            // 发生事件的文件描述符是什么时候被记录到 Channel 中的？注意到每个 Channel 在定义后都会 enableReading
+            int chfd = activeChannels[i]->getFd();
             // 发生事件的文件描述符是服务器 socket，说明有新的客户端连接请求
             if(chfd == serv_sock->getFd()){
                 // 这里 new 的对象后续没有 delete，可能会发生内存泄露。

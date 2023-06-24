@@ -72,6 +72,7 @@ void Epoll::updateChannel(Channel *channel){
     int fd = channel->getFd();
     struct epoll_event ev;
     memset(&ev, 0, sizeof(ev));
+    // 注意这句话，将用户自定义的结构与该指针绑定，后续可以直接调用 Channel 的 getFd() 函数
     ev.data.ptr = channel;
     // 在 Channel::enableReading() 中已经设置好事件类型
     ev.events = channel->getEvents();
