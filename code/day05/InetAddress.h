@@ -1,3 +1,5 @@
+// 封装 sockaddr_in IP地址绑定和类型转换的操作
+
 #pragma once
 #include <arpa/inet.h>
 

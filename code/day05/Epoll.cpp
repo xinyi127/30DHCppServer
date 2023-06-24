@@ -1,9 +1,9 @@
 #include "Epoll.h" // 包含了 <vector>
+#include "Channel.h"
 #include "util.h"
 #include <unistd.h>
 #include <string.h>
 #include <new> // new 在 C++ 中是内置运算符，不加头文件也可以使用，但为了可读性和可维护性，此处加上 <new>
-
 
 #define MAX_EVENTS 1024
 
@@ -24,13 +24,13 @@ Epoll::~Epoll() {
         epfd = -1;
     }
     // detele 后加下标运算符 []，表明删除数组类型的对象。
-    // delete[] 与 new[] 配对使用。原因是：尽管不带 [] 也可以将数组的空间收回，但是这只会调用第一个对象的析构函数。
+    // delete[] 与 new[] 配对使用。原因是：如果不加 [] 只会调用第一个对象的析构函数。
     delete [] events;
 }
 
-int Epoll::getFd(){
-    return epfd;
-}
+//int Epoll::getFd(){
+//    return epfd;
+//}
 
 void Epoll::addFd(int fd, uint32_t op) {
     struct epoll_event ev;
@@ -41,15 +41,47 @@ void Epoll::addFd(int fd, uint32_t op) {
     errif(epoll_ctl(epfd, EPOLL_CTL_ADD, fd, &ev) == -1, "epoll add event error");
 }
 
-std::vector<epoll_event> Epoll::poll(int timeout) {
-    std::vector<epoll_event> activeEvents;
+// 在该函数后重新实现新的版本
+//std::vector<epoll_event> Epoll::poll(int timeout) {
+//    std::vector<epoll_event> activeEvents;
+//    int nfds = epoll_wait(epfd, events, MAX_EVENTS, timeout);
+//    errif(nfds == -1, "epoll wait error");
+//    // 将存在 events[] 中的事件转存到 activeEvents 中
+//    for(int i = 0; i < nfds; ++ i) {
+//        activeEvents.push_back(events[i]);
+//    }
+//    return activeEvents;
+//}
+
+// 重新实现 Epoll::poll() 函数，文件描述符被封装为 Channel，用 Channel 的事件数据成员来保存发生的事件 
+std::vector<Channel*> Epoll::poll(int timeout){ // timeout 传入的默认值为 -1
+    std::vector<Channel*> activeChannels;
     int nfds = epoll_wait(epfd, events, MAX_EVENTS, timeout);
     errif(nfds == -1, "epoll wait error");
-    // 将存在 events[] 中的事件转存到 activeEvents 中
-    for(int i = 0; i < nfds; ++ i) {
-        activeEvents.push_back(events[i]);
+    for(int i = 0; i < nfds; ++ i){
+        // epoll_event.data.ptr 字段用于存储事件相关的用户自定义数据指针，将待定的上下文或数据与事件关联起来
+        Channel *ch = (Channel*)events[i].data.ptr;
+        ch->setRevents(events[i].events);
+        activeChannels.push_back(ch);
     }
-    return activeEvents;
+    return activeChannels;
+}
+
+// 如果 channel 中封装的文件描述符尚未被添加 epoll 红黑树则添加到树上并更新事件，否则直接更新事件。
+void Epoll::updateChannel(Channel *channel){
+    int fd = channel->getFd();
+    struct epoll_event ev;
+    memset(&ev, 0, sizeof(ev));
+    ev.data.ptr = channel;
+    // 在 Channel::enableReading() 中已经设置好事件类型
+    ev.events = channel->getEvents();
+    if(!channel->getInEpoll()){
+        errif(epoll_ctl(epfd, EPOLL_CTL_ADD, fd, &ev) == -1, "epoll add error");
+        // 务必记得更新 channel 的 inEpoll 状态
+        channel->setInEpoll();
+    } else{
+        errif(epoll_ctl(epfd, EPOLL_CTL_MOD, fd, &ev) == -1, "epoll modify error");
+    }
 }
 
 

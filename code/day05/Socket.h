@@ -1,3 +1,5 @@
+// 封装 socket 有关的操作，例如创建 socket、绑定、监听、连接、设置非阻塞模式等
+
 #pragma once
 
 class InetAddress;
