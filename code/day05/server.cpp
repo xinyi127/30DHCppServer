@@ -51,7 +51,7 @@ int main() {
                 // 将客户端 socket 加入到 epoll 树上，并设置监听的事件
                 Channel* clntChannel = new Channel(ep, clnt_sock->getFd());
                 clntChannel->enableReading();
-                delete clntChannel;
+                //delete clntChannel;
             } else if(activeChannels[i]->getRevents() & EPOLLIN){ // 可读事件
                 handleReadEvent(activeChannels[i]->getFd());
             } else{
