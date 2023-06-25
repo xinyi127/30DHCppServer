@@ -32,6 +32,7 @@ void Server::handleReadEvent(int sockfd){
     while(true){
         memset(buf, 0, sizeof(buf));
         ssize_t bytes_read = read(sockfd, buf, sizeof(buf));
+        // 注意 if-else 逻辑对应，不要写混
         if(bytes_read == -1){ // 发生错误，需要根据 errno 判断错误类型
             if(errno == EINTR){ // EINTR 表示信号中断，说明客户端中断（注意不是断开连接），由于是边缘触发，需要继续读数据
                 printf("conitnue reading");
@@ -39,14 +40,14 @@ void Server::handleReadEvent(int sockfd){
             } else if((errno == EAGAIN) || (errno == EWOULDBLOCK)){ // EAGAIN 和 EWOULDBLOCK 均表示资源暂时不可用，此时表明数据读取完成
                 printf("finish reading once, errno: %d\n", errno);
                 break;
-            } else if(bytes_read == 0){ // 客户端断开连接
-                printf("EOF, client fd %d disconnected\n", socket);
-                close(sockfd); // 释放关闭连接的 socket，此时 socket 将自动从epoll树上移除
-                break;
-            } else if(bytes_read > 0){ // 正常读取到数据
-                printf("message from client fd %d: %s\n", socket, buf);
-                write(sockfd, buf, sizeof(buf)); // 回写到客户端
-            }
+            } 
+        }else if(bytes_read == 0){ // 客户端断开连接
+            printf("EOF, client fd %d disconnected\n", socket);
+            close(sockfd); // 释放关闭连接的 socket，此时 socket 将自动从epoll树上移除
+            break;
+        } else if(bytes_read > 0){ // 正常读取到数据
+            printf("message from client fd %d: %s\n", socket, buf);
+            write(sockfd, buf, sizeof(buf)); // 回写到客户端
         }
     }
 }
