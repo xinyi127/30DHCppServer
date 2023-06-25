@@ -1,33 +1,41 @@
-// 封装文件描述符有关事件的部分，一个 channel 类只负责一个文件描述符
+// 封装添加到 epoll 树上的文件描述符有关事件的部分细节，一个 channel 类只负责一个文件描述符
+// 可以视为 
 
 #pragma once
 #include <sys/epoll.h>
+#include <functional> // std::function
 
-class Epoll; // 将 Epoll 指针作为 channel 的成员
+class EventLoop;
 
 class Channel
 {
 private:
-    Epoll *ep; // 
+    EventLoop* loop;
     int fd; // 文件描述符
-    uint32_t events; // 监听 fd 的哪些事件
-    uint32_t revents; // epoll 返回 channel 时文件描述符正在发生的事件
+    uint32_t events; // 监听 Channel 的哪些事件
+    uint32_t revents; // epoll 返回 Channel 时文件描述符所发生的事件
     bool inEpoll; // 顾名思义，channel 是否在 epoll 红黑树中
+    std::function<void()> callback; // 类模板，便于让 callback 对于不同的 Channel 指向不同的函数
 public:
     // 构造和析构
-    Channel(Epoll *_ep, int _fd);
+    Channel(EventLoop *_loop, int _fd);
     ~Channel();
 
     // Channel 不在 epoll 红黑树中，则添加；否则更新 Channel、打开允许读事件
     void enableReading();
+    // 调用 callback()，注意此时 callback() 不一定指向 Server.h 中的 handleEvent() 函数，而是根据 Channel 描述符的不同
+    // 分别绑定到 newConnection() 或 handleEvent() 函数上，前者负责连接，后者负责处理请求（读写）
+    void handleEvent();
 
     // 获取/修改 数据成员
     int getFd();
     uint32_t getEvents();
     uint32_t getRevents();
     bool getInEpoll();
+
     void setInEpoll();
     void setRevents(uint32_t);
+    void setCallback(std::function<void()>);
 };
 
 

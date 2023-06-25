@@ -18,13 +18,9 @@ public:
 
     // 每次向 epoll 中添加文件描述符时，需要指定该文件描述符的事件类型
     void addFd(int fd, uint32_t op); // uint32_t 可以确保数据类型长度和位宽
-
-    //int getFd(); 将 fd 添加到 epoll 红黑树上这一步封装，由 Channel 调用 epoll 实现，所以不再需要 getFd() 函数
-
     void updateChannel(Channel*);
 
     // timeout 默认为 -1
     //std::vector<epoll_event> poll(int timeout = -1);
-
     std::vector<Channel*> poll(int timeout = -1);
 };
