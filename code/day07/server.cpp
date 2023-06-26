@@ -1,8 +1,6 @@
-// EventLoop 的 loop() 通过 Epoll 的 poll() 函数得到发生事件的 Channel
-// 回调 Channel 绑定的回调函数以处理事件
-//
-// 整个服务器被抽象为 Server，简易 Reactor 模式。
+// 整个服务器被抽象为 Server 类，简易 Reactor 模式。
 // EventLoop 和 Channel 被抽象出来，构成事件驱动模型。
+// Acceptor 负责获取连接。
 
 #include "src/EventLoop.h"
 #include "src/Server.h"
