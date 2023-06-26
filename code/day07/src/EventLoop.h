@@ -1,5 +1,5 @@
 // 作为 Server(main Reactor) 的事件循环部分，负责监听并触发相应的回调函数
-// 封装 Epoll 和 Channel 相关细节
+// 进一步抽象封装 Epoll 的相关操作细节
 
 #pragma once
 

@@ -2,28 +2,22 @@
 #include "Socket.h"
 #include "InetAddress.h"
 #include "Channel.h"
+#include "Acceptor.h"
 #include <functional>
 #include <string.h>
 #include <unistd.h>
 
 #define READ_BUFFER 1024
 
-Server::Server(EventLoop* _loop) : loop(_loop){
-    // 创建 socket、绑定地址，监听、设置非阻塞（配合边缘触发模式）
-    Socket* serv_sock = new Socket();
-    InetAddress* serv_addr = new InetAddress("127.0.0.1", 8888);
-    serv_sock->bind(serv_addr);
-    serv_sock->listen();
-    serv_sock->setnonblocking();
-
-    // 为监听 socket 创建 Channel 、设置对应 callback、设置监听事件并添加到 epoll 树上
-    Channel* servChannel = new Channel(loop, serv_sock->getFd());
-    std::function<void()> cb = std::bind(&Server::newConnection, this, serv_sock); // 成员函数会有一个隐式传递的对象指针
-    servChannel->setCallback(cb);
-    servChannel->enableReading();
+// 创建 Acceptor 对象并绑定回调函数
+Server::Server(EventLoop* _loop) : loop(_loop), acceptor(nullptr){
+    acceptor = new Acceptor(loop);
+    std::function<void(Socket*)> cb = std::bind(&Server::newConnection, this, std::placeholders::_1); // _1 占位符，表示参数在调用时给出
+    acceptor->setNewConnectionCallback(cb);
 }
 
 Server::~Server(){
+    delete acceptor;
 }
 
 // 处理读事件，并向客户端写回相同数据
