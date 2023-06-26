@@ -15,6 +15,8 @@ Acceptor::Acceptor(EventLoop* _loop) : loop(_loop){
     // 监听 socket：Channel.callback->Acceptor.acceptConnection->newConnectionCallback->Server.newConnection
     acceptChannel = new Channel(loop, sock->getFd());
     std::function<void()> cb = std::bind(&Acceptor::acceptConnection, this);
+    acceptChannel->setCallback(cb);
+    acceptChannel->enableReading();
 }
 
 Acceptor::~Acceptor(){
