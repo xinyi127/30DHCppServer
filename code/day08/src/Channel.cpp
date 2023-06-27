@@ -1,11 +1,17 @@
 #include "EventLoop.h"
 #include "Channel.h"
+#include <unistd.h>
 
 // 初始化
 Channel::Channel(EventLoop* _loop, int _fd) : loop(_loop), fd(_fd), events(0), revents(0), inEpoll(false){
 }
 
+// Channel 生命周期结束时也应该自动关闭 socket
 Channel::~Channel(){
+    if (fd != -1){
+        close(fd);
+        fd = -1;
+    }
 }
 
 // callback() 根据 Channel 描述符的不同，分别绑定了连接和处理的函数
@@ -13,9 +19,9 @@ void Channel::handleEvent(){
     callback();
 }
 
-// 将 Channel 描述符添加到 epoll 树上并增加（之前的版本是“设置”）监听事件为可读与边缘触发
+// 将 Channel 描述符添加到 epoll 树上并增加（第六版及以前是“设置”）监听事件为可读与边缘触发
 void Channel::enableReading(){
-    events |= EPOLLIN | EPOLLET; //从 events=EPOLLIN|EPOLLET 改为 events|=EPOLLIN|EPOLLET;
+    events |= EPOLLIN | EPOLLET;
     loop->updateChannel(this);
 }
 
