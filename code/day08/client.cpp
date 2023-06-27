@@ -16,7 +16,7 @@ int main(){
     serv_addr.sin_family = AF_INET;
     // 实际上 sin_addr 只有 s_addr 一个成员变量，之所以要设计成结构体是因为这样可以保证可移植性和可扩展性
     serv_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-    serv_addr.sin_port = htons(8888);
+    serv_addr.sin_port = htons(1234);
 
     errif(connect(sockfd, (sockaddr*)&serv_addr, sizeof(serv_addr)) == -1, "socket connect error");
 
