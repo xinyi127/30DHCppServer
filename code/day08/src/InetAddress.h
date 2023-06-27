@@ -5,12 +5,16 @@
 
 class InetAddress 
 {
-public: // 为了便于使用，本应是 private 改为 public
+private:
     struct sockaddr_in addr;
     // socklen_t 是无符号整型
     socklen_t addr_len;
 public:
     InetAddress();
+    InetAddress(const char* ip, uint16_t port);
     ~InetAddress();
-    InetAddress(const char *ip, uint16_t port);
+
+    void setInetAddr(sockaddr_in _addr, socklen_t _addr_len);
+    sockaddr_in getAddr();
+    socklen_t getAddr_len();
 };
