@@ -32,14 +32,14 @@ Epoll::~Epoll() {
 //    return epfd;
 //}
 
-void Epoll::addFd(int fd, uint32_t op) {
-    struct epoll_event ev;
-    memset(&ev, 0, sizeof(ev));
-    ev.data.fd = fd;
-    ev.events = op;
-    // epoll_ctl() 第二个参数只有三种取值：EPOLL_CTL_ADD、EPOLL_CTL_MOD、EPOLL_CTL_DEL
-    errif(epoll_ctl(epfd, EPOLL_CTL_ADD, fd, &ev) == -1, "epoll add event error");
-}
+//void Epoll::addFd(int fd, uint32_t op) {
+//    struct epoll_event ev;
+//    memset(&ev, 0, sizeof(ev));
+//    ev.data.fd = fd;
+//    ev.events = op;
+//    // epoll_ctl() 第二个参数只有三种取值：EPOLL_CTL_ADD、EPOLL_CTL_MOD、EPOLL_CTL_DEL
+//    errif(epoll_ctl(epfd, EPOLL_CTL_ADD, fd, &ev) == -1, "epoll add event error");
+//}
 
 // 在该函数后重新实现新的版本
 //std::vector<epoll_event> Epoll::poll(int timeout) {
