@@ -11,7 +11,7 @@ private:
 public:
     Socket();
     ~Socket();
-    Socket(int);
+    Socket(int _fd);
 
     void bind(InetAddress*);
     void listen();
