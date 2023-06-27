@@ -1,5 +1,6 @@
-// Reactor 模式中的 Acceptor 对象，负责获取连接
-// Reactor 对象通过 EventLoop 监听事件，如果是连接建立的事件，则交由 Acceptor 对象进行处理
+// Reactor 模式中，将 Acceptor 抽象出来用于接受连接请求
+// 由于Acceptor面对的是多种连接，其实际的连接代码仍将连接逻辑放在 Server 中
+// 将连接逻辑放在Server类中进行处理，也可以更方便地扩展和管理多个连接
 
 #pragma once
 
@@ -7,7 +8,6 @@
 
 class EventLoop;
 class Socket;
-class InetAddress;
 class Channel;
 
 class Acceptor
@@ -15,13 +15,11 @@ class Acceptor
 private:
     EventLoop* loop;
     Socket* sock; // 每个 Acceptor 对应一个服务端监听 socket
-    InetAddress* addr;
     Channel* acceptChannel;
+    std::function<void(Socket*)> newConnectionCallback;
 public:
     Acceptor(EventLoop* _loop);
     ~Acceptor();
     void acceptConnection();
-    // newConnetionCallback 是一个函数封装对象，实际绑定的函数在 Server 类中实现
-    std::function<void(Socket*)> newConnectionCallback;
     void setNewConnectionCallback(std::function<void(Socket*)>);
 };
