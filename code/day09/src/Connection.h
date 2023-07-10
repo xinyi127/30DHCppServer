@@ -4,10 +4,13 @@
 #pragma once
 
 #include <functional>
+#include <string>
 
+class Buffer;
 class EventLoop;
 class Socket;
 class Channel;
+
 class Connection
 {
 private:
@@ -16,6 +19,8 @@ private:
     Channel* channel;
     // 由于 Connection 的生命周期由 Server 进行管理，所以也应该由 Server 来删除连接。
     std::function<void(Socket*)> deleteConnectionCallback; // 在 Server 新建每个连接时绑定其删除回调函数
+    std::string* inBuffer;
+    Buffer* readBuffer; // 从客户端读取来的数据都存放在读缓冲区里
 public:
     Connection(EventLoop* _loop, Socket* _sock);
     ~Connection();
