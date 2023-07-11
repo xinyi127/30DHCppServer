@@ -37,12 +37,14 @@ void Connection::echo(int sockfd){
                 printf("finish reading once\n");
                 printf("message from client fd %d: %s\n", sockfd, readBuffer->c_str());
                 errif(write(sockfd, readBuffer->c_str(), readBuffer->size()) == -1, "socket wirte error");
+                readBuffer->clear(); // 读完数据后应该清空缓冲区
                 break;
             } 
         }else if(bytes_read == 0){ // 客户端断开连接
             printf("EOF, client fd %d disconnected\n", sockfd);
             // close(sockfd); // 释放关闭连接的 socket，此时 socket 将自动从epoll树上移除
             deleteConnectionCallback(sock);
+            break;
         } else if(bytes_read > 0){ // 正常读取到数据
             readBuffer->append(buf, bytes_read);
         }
