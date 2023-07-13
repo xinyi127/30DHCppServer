@@ -16,7 +16,8 @@ Channel::~Channel(){
 
 // callback() 根据 Channel 描述符的不同，分别绑定了连接和处理的函数
 void Channel::handleEvent(){
-    callback();
+   // callback();
+   loop->addThread(callback);
 }
 
 // 将 Channel 描述符添加到 epoll 树上并增加（第六版及以前是“设置”）监听事件为可读与边缘触发
