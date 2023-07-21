@@ -37,6 +37,7 @@ ThreadPool::~ThreadPool(){
     }
 }
 
+/*
 void ThreadPool::add(std::function<void()> func){
     {
         std::unique_lock<std::mutex> lock(tasks_mtx);
@@ -46,3 +47,4 @@ void ThreadPool::add(std::function<void()> func){
     }
     cv.notify_one(); // 通知一个等待中的线程
 }
+*/
