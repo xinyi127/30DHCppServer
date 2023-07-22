@@ -25,5 +25,5 @@ public:
     // 客户端 socket 发生事件：Channel->handleEvent() 调用 Connection->echo()
     // void handleReadEvent(int); // 传入的是发生读事件的文件描述符 
     void newConnection(Socket *serv_sock); // 新建 TCP 连接
-    void deleteConnection(Socket* sock); // 断开 TCP 连接
+    void deleteConnection(int sockfd); // 断开 TCP 连接
 };
