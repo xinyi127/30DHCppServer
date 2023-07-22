@@ -61,7 +61,7 @@ std::vector<Channel*> Epoll::poll(int timeout){ // timeout 传入的默认值为
     for(int i = 0; i < nfds; ++ i){
         // epoll_event.data.ptr 字段用于存储事件相关的用户自定义数据指针，将待定的上下文或数据与事件关联起来
         Channel *ch = (Channel*)events[i].data.ptr;
-        ch->setRevents(events[i].events);
+        ch->setReady(events[i].events);
         activeChannels.push_back(ch);
     }
     return activeChannels;
@@ -85,4 +85,9 @@ void Epoll::updateChannel(Channel *channel){
     }
 }
 
-
+// 将 Channel 从 Epoll 中移除，并设置对应的标志位为 false
+void Epoll::deleteChannel(Channel* channel){
+    int fd = channel->getFd();
+    errif(epoll_ctl(epfd, EPOLL_CTL_DEL, fd, NULL) == -1, "epoll delete error");
+    channel->setInEpoll(false);
+}
