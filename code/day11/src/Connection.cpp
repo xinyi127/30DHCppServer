@@ -7,12 +7,17 @@
 #include <string.h>
 #include <iostream>
 
-// 为新的 TCP 连接创建 Channel，绑定回调函数，打开读事件监听
-Connection::Connection(EventLoop* _loop, Socket* _sock) : loop(_loop), sock(_sock), channel(nullptr), inBuffer(new std::string()), readBuffer(nullptr){
+// 为新的 TCP 连接创建 Channel，设置监听的事件，绑定读回调函数，使用线程池
+Connection::Connection(EventLoop* _loop, Socket* _sock)
+    : loop(_loop), sock(_sock), channel(nullptr), inBuffer(new std::string()), readBuffer(nullptr){
+
     channel = new Channel(loop, sock->getFd());
+    channel->enableRead();
+    channel->useET();
+
     std::function<void()> cb = std::bind(&Connection::echo, this, sock->getFd());
-    channel->setCallback(cb);
-    channel->enableReading();
+    channel->setReadCallback(cb);
+    channel->setUseThreadPool(true);
     readBuffer = new Buffer();
 }
 
@@ -21,6 +26,7 @@ Connection::Connection(EventLoop* _loop, Socket* _sock) : loop(_loop), sock(_soc
 Connection::~Connection(){
     delete channel;
     delete sock;
+    delete readBuffer;
 }
 
 void Connection::echo(int sockfd){
@@ -36,14 +42,19 @@ void Connection::echo(int sockfd){
             } else if((errno == EAGAIN) || (errno == EWOULDBLOCK)){ // EAGAIN 和 EWOULDBLOCK 均表示资源暂时不可用，此时表明数据读取完成
                 printf("finish reading once\n");
                 printf("message from client fd %d: %s\n", sockfd, readBuffer->c_str());
-                errif(write(sockfd, readBuffer->c_str(), readBuffer->size()) == -1, "socket wirte error");
+                // errif(write(sockfd, readBuffer->c_str(), readBuffer->size()) == -1, "socket wirte error");
+                send(sockfd);
                 readBuffer->clear(); // 读完数据后应该清空缓冲区
                 break;
-            } 
+            } else{
+                printf("Connection reset by peer\n");
+                deleteConnectionCallback(sockfd); // 会有 bug，注释后单线程无 bug
+                break;
+            }
         }else if(bytes_read == 0){ // 客户端断开连接
             printf("EOF, client fd %d disconnected\n", sockfd);
             // close(sockfd); // 释放关闭连接的 socket，此时 socket 将自动从epoll树上移除
-            deleteConnectionCallback(sock);
+            deleteConnectionCallback(sockfd); // 多线程会有 bug
             break;
         } else if(bytes_read > 0){ // 正常读取到数据
             readBuffer->append(buf, bytes_read);
@@ -51,7 +62,22 @@ void Connection::echo(int sockfd){
     }
 }
 
-void Connection::setDeleteConnectionCallback(std::function<void(Socket*)> _cb){
+void Connection::setDeleteConnectionCallback(std::function<void(int)> _cb){
     deleteConnectionCallback = _cb;
 }
 
+void Connection::send(int sockfd){
+    char buf[readBuffer->size()];
+    strcpy(buf, readBuffer->c_str());
+    int data_size = readBuffer->size();
+    int data_left = data_size; // 剩余要发送的数据大小
+    while(data_left > 0){
+        // write 参数：文件描述符，起始地址，发送字节数
+        ssize_t bytes_write = write(sockfd, buf + data_size - data_left, data_left);
+        // 返回值 -1 且错误号为 EAGAIN，表示资源不可用
+        if(bytes_write == -1 && errno == EAGAIN){
+            break;
+        }
+        data_left -= bytes_write;
+    }
+}
