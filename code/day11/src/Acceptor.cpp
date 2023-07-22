@@ -23,7 +23,7 @@ Acceptor::Acceptor(EventLoop* _loop) : loop(_loop), sock(nullptr), acceptChannel
     // 监听 socket：Channel.callback->Acceptor.acceptConnection->newConnectionCallback->Server.newConnection
     acceptChannel = new Channel(loop, sock->getFd());
     std::function<void()> cb = std::bind(&Acceptor::acceptConnection, this);
-    acceptChannel->setCallback(cb);
+    acceptChannel->setReadCallback(cb);
     acceptChannel->enableRead();
     acceptChannel->setUseThreadPool(false); // 设置建立连接时不使用线程池
     delete addr; // 这一版中将 addr 从 Acceptor 的数据成员中移除，需要及时 delete
