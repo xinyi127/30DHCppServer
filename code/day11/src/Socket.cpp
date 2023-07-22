@@ -25,13 +25,11 @@ Socket::~Socket() {
 }
 
 // 引入中间变量，提高代码的可读性、可维护性和可扩展性
-// 可以在函数中进行更多的逻辑处理或者对传入的参数进行修改，而不会直接改变用户传入的 InetAddress 对象
+// // 可以根据需要在函数中进行更多的逻辑处理或者对传入的参数进行修改
 void Socket::bind(InetAddress *_addr) {
     // ::bind() 前的作用域限定符用于表明这是全局 bind() 函数
     struct sockaddr_in addr = _addr->getAddr();
-    socklen_t addr_len = _addr->getAddr_len();
-    errif(::bind(fd, (sockaddr*)&addr, addr_len) == -1, "socket bind error"); // 注意 &
-    _addr->setInetAddr(addr, addr_len);
+    errif(::bind(fd, (sockaddr*)&addr, sizeof(addr)) == -1, "socket bind error"); // 注意 &
 }
 
 void Socket::listen() {
@@ -46,20 +44,19 @@ void Socket::setnonblocking() {
 
 int Socket::accept(InetAddress* _addr) {
     struct sockaddr_in addr;
-    socklen_t addr_len = sizeof(addr);
     memset(&addr, 0, sizeof(addr));
+    socklen_t addr_len = sizeof(addr);
     // accept() 和 bind() 函数的参数类型相同
     int clnt_sockfd = ::accept(fd, (sockaddr*)&addr, &addr_len); // 注意 accept 第三个参数也是指针类型
     errif(clnt_sockfd == -1, "socket accept error");
-    _addr->setInetAddr(addr, addr_len);
+    _addr->setInetAddr(addr);
     return clnt_sockfd;
 }
 
 void Socket::connect(InetAddress* _addr){
     struct sockaddr_in addr = _addr->getAddr();
-    socklen_t addr_len = _addr->getAddr_len();
     // connect 同样需要转换类型
-    errif(::connect(fd, (sockaddr*)&addr, addr_len) == -1, "socket connect error");
+    errif(::connect(fd, (sockaddr*)&addr, sizeof(addr)) == -1, "socket connect error");
 }
 
 int Socket::getFd() {
