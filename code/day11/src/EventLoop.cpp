@@ -11,6 +11,7 @@ EventLoop::EventLoop() : ep(nullptr), threadPool(nullptr), quit(false){
 }
 
 EventLoop::~EventLoop() {
+    delete threadPool;
     delete ep;
 }
 
