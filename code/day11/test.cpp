@@ -20,7 +20,7 @@ void oneClient(int msgs, int wait){
     Buffer* sendBuffer = new Buffer();
     Buffer* readBuffer = new Buffer();
 
-    sleep(wait);
+    sleep(wait); // 等待 wait 秒
     int count = 0;
     while(count < msgs){
         sendBuffer->setBuf("I'm client!");
@@ -52,6 +52,7 @@ void oneClient(int msgs, int wait){
     delete sock;
 }
 
+// 参数个数、参数（二维数组）
 int main(int argc, char* argv[]){
     int threads = 100; // 线程数
     int msgs = 100; // 消息树
@@ -59,6 +60,7 @@ int main(int argc, char* argv[]){
     int o;
     const char* optstring = "t:m:w:";
     while((o = getopt(argc, argv, optstring)) != -1){
+        // optarg 是全局变量
         switch (o){
             case 't':
                 threads = stoi(optarg);
@@ -69,6 +71,7 @@ int main(int argc, char* argv[]){
             case 'w':
                 wait = stoi(optarg);
                 break;
+            // 遇到未指定选项或缺少参数
             case '?':
                 printf("error optopt: %c\n", optopt);
                 printf("error opterr: %d\n", opterr);
@@ -77,6 +80,8 @@ int main(int argc, char* argv[]){
     }
 
     ThreadPool* poll = new ThreadPool(threads);
+    // 将 oneClient 函数与消息数 msgs 和等待时间 wait 绑定为一个可调用对象 func
+    // 从而将 oneClient 函数作为任务提交给线程池执行时，能够携带特定的参数
     std::function<void()> func = std::bind(oneClient, msgs, wait);
     for(int i = 0; i < threads; ++ i){
         poll->add(func);
